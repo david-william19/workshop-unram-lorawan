@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const antaresApi = require("../service/antaresAPI");
+
 /* GET home page. */
 router.get("/", async function (req, res, next) {
   let status = "mati";
