@@ -1,0 +1,95 @@
+<main class="main">
+  <header>
+    <img
+      alt="image-antares"
+      src="/images/logo_antares.svg"
+      width="177"
+      height="177"
+    />
+    <h1 class="title-app">Antares Workshop</h1>
+  </header>
+  <div class="container-grid">
+    <div class="box accelerator">
+      <img
+        alt="temperature"
+        src="/images/accelerator.svg"
+        class="icons"
+        width="64"
+        height="64"
+      />
+      <div class="body-accelerator">
+        <h3 class="value-accelerator" id="x">{{temperature}} C</h3>
+      </div>
+      <h4 class="title-accelerator">Temperature</h4>
+    </div>
+    <div class="box proximity">
+      <img
+        alt="temperature"
+        src="/images/object.svg"
+        class="icons"
+        width="75"
+        height="75"
+      />
+      <h3 class="value-proximity" id="proximity">{{humidity}}</h3>
+      <h4 class="title-proximity">Humidity</h4>
+    </div>
+    <div id="card" class="box smart-switch {{status}}">
+      <button class="button-switch" id="switch" data-status={{status}}>
+        {{status}}
+      </button>
+      <h4 class="title-switch">Buzzer switch</h4>
+    </div>
+  </div>
+</main>
+
+<script type="text/javascript">
+const button = document.getElementById('switch'); 
+const card = document.getElementById('card')
+{{!-- switches func for send data and change color --}}
+  const onClick = () => { 
+    let status = (button.getAttribute('data-status') === "nyala") ? "mati" : "nyala"
+    if(card.classList.contains('mati')){
+      card.classList.remove('mati')
+      card.classList.add(status)
+      button.innerText = 'nyala'
+      button.setAttribute("data-status", "nyala")
+    }else {
+      card.classList.remove('nyala')
+      card.classList.add(status)
+      button.innerText = 'mati'
+      button.setAttribute("data-status", "mati")
+    }
+    {{!-- kirim data ke antares --}}
+    let body = { type: "downlink", data: status } 
+    fetch(`/postData`, { 
+      method: "POST", 
+      headers: { 'Content-Type': 'application/json', }, 
+      body: JSON.stringify(body) 
+      })
+  }
+  button.addEventListener("click", onClick);
+</script>
+
+<script src="https://cdn.socket.io/4.4.0/socket.io.min.js"></script>
+
+<script type="text/javascript">
+{{!-- get data from socket io that we subscribe --}}
+  var socket = io({ query: 'dashboard=antares' }); 
+  const updateContent = (temperature, humidity) => { 
+    document.getElementById("temperature").innerHTML = `${temperature ?? 0} C`
+    document.getElementById("humidity").innerHTML = `${humidity ?? '-'}`
+    }
+  socket.on('packet', function (data) { 
+    console.log('data socket', data)
+  if (data.topic !== null) { 
+    const dataCin = data['m2m:rsp'].pc['m2m:cin'] 
+    const dataCon = JSON.parse(dataCin.con) 
+    let status;
+    let humidity = "-";
+    let temperature = 0;
+    temperature = dataCon.temperature
+    humidity = dataCon.humidity
+    updateContent(temperature, humidity) 
+  }
+  })
+</script>
